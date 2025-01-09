@@ -55,7 +55,7 @@ beta_mmse = sqrt(N_A/trace(P_mmse*P_mmse'));
         
 for l = 1:N
     % QPSK symbols
-    s_qpsk = [sign(randint(K*N_U,1)-0.5) + sqrt(-1)*sign(randint(K*N_U,1)-0.5)];
+    s_qpsk = [sign(randi(K*N_U,1)-0.5) + sqrt(-1)*sign(randi(K*N_U,1)-0.5)];
     % Scaling
     s = s_qpsk/sqrt(2);
     % Noise    
