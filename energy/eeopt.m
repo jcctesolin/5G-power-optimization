@@ -16,7 +16,7 @@ H = abs(sqrt(0.5) * (randn(M, K) + 1i * randn(M, K)));
 P = P_max * rand(M, K);
 
 % Circuit and backhaul power consumption (fixed)
-P_circuit = 0.1 * ones(M, 2);
+P_circuit = 0.1 * ones(M, 1);
 P_backhaul = 0.05 * ones(M, 1);
 
 %% Dinkelbach’s Algorithm for EE Maximization
