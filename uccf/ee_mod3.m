@@ -24,8 +24,9 @@ D = zeros(L);
 
 for j=1:max_srv
     for i=1:K
-        if j = 1 
+        if j == 1 
             then mst_AP_index = sorted_indices(j:i);
+        end
         D(sorted_indices(j:i),K) = 1;
         cluster=[sorted_indices(j:i)]; 
     end

@@ -4,7 +4,7 @@ clc; clear; close all;
 K = 2 ;   % Number of users
 L = 4 ;  % Number of APs
 W = 10e6; % Bandwidth (Hz)
-P_max = 1; % Max transmission power per AP (W)
+P_max = 10; % Max transmission power per AP (W)
 sigma2 = 1e-9; % Noise power (W)
 epsilon = 1e-6; % Convergence tolerance
 max_iter = 100; % Max iterations for Dinkelbach's algorithm
@@ -41,7 +41,7 @@ end
 
 %% Initialize power allocation randomly
 %P = P_max * rand(L, K);
-P = P_max * ones(L, K);
+%P = P_max * ones(L, K) * 1/K;
 %P = D * P;
 %P = P_max * D;
 
@@ -68,19 +68,18 @@ bagrows = size(bag, 1);
 for bagiter=1:bagrows
     lambda = 0; % Initial lambda
     iter = 0;
+    P = P_max * ones(L, K) * 1/K;
     while iter < max_iter
         iter = iter + 1;
-    
         % Compute SINR for each user
-        SINR = zeros(K, 1); % zero matrix, matrix initialization
+        SINR = zeros(K, 1);
         for k = 1:K
-            %signal = sum(P(:, k) .* H(:, k).^2);
-            %signal = sum(P(:, k) .* D.* H(:, k).^2);
-            signal =  bag{bagiter,k}*(H(:, k).^2.* P(:, k)) ;
+            %signal =  bag{bagiter,k}*(H(:, k).^2.* P(:, k)) ;
+            signal =  sum(bag{bagiter,k}*(H(:, k).^2.* P(:, k))) ;
             %interference = sum(sum(P .* H.^2)) - signal;
             interference = sum(H(:, k).^2.* P(:, k)) - signal ;
             SINR(k) = signal / (sigma2 + interference);
-            R(k) = W * log2(1 + SINR(k)) ;
+            %R(k) = W * log2(1 + SINR(k)) ;
         end
     
         % Compute sum-rate
@@ -100,20 +99,24 @@ for bagiter=1:bagrows
     
         % Update lambda
         lambda = EE;
-
+        
+        %dummy= sum(bag{bagiter,k}*(H(:, k).^2.* P(:, k)))/(sigma2+(sum(H(:, k).^2.* P(:, k)) - sum(bag{bagiter,k}*(H(:, k).^2.* P(:, k)))));
+        %dummy_num=sum(bag{bagiter,k}*(H(:, k).^2.* P(:, k)));
+        %dummy_den=(sigma2+(sum(H(:, k).^2.* P(:, k)) - sum(bag{bagiter,k}*(H(:, k).^2.* P(:, k)))))
               
         % Solve Convex Power Allocation Subproblem (EDM Step)
         cvx_begin quiet
             variable P_new(L, K) nonnegative;
-            maximize sum(W * log(1 + sum(P_new .* H.^2, 1))/log(2)) - lambda * (sum(P_new(:)) + sum(P_circuit) + sum(P_backhaul));
+            %maximize sum(W *  log(1 + sum(P_new .* H.^2, 1))/log(2)) - lambda * (sum(P_new(:)) + sum(P_circuit) + sum(P_backhaul));
+            maximize  W*sum(1+log(sum(bag{bagiter,k}*(H(:, k).^2.* P_new(:, k)))))/log(2) + W*sum(log(sigma2 + sum(H(:, K).^2.* P_new(:, K)) - sum(bag{bagiter,K}*(H(:, K).^2.* P_new(:, K))))/log(2))  - lambda * (sum(P_new(:)) + sum(P_circuit) + sum(P_backhaul));
             subject to
-                0.1*P_max <= P_new <= P_max;
-                %sum(P_new, 2) <= P_max; 
-                %0.01 <= sum(P_new, 2) <= P_max;  % Power constraint at each AP
-                %sum(P_new, 2) >= 0.01;
+                %0.1*P_max <= P_new <= P_max;
+                %1.1  <= sum(P_new, 2) <= P_max;  % Power constraint at each AP
+                P_new(L, K) >= 1;
+                sum(P_new, 2) <= P_max;
                 %W * log(1 + P_new .* H.^2) >= 1000;
+                %W * log(1 + SINR_new(K))/log(2) >= 1000;
         cvx_end
-    
         % Update Power Allocation
         P = P_new;
     end
@@ -122,9 +125,11 @@ for bagiter=1:bagrows
     disp(['Bag: ', num2str(bagiter), '']);
     disp('Cluster:');
     disp(bag(bagiter, :));
-    disp(['Optimized EE: ', num2str(EE), ' bits/Joule']);
+    disp(['Optimized EE: ', num2str(EE,'%.2e'), ' bits/Joule']);
     disp(['Total Power Consumption: ', num2str(P_total), ' W']);
     disp(['Total Sum-Rate: ', num2str(R_sum / 1e6), ' Mbps']);
+    disp('Power Matrix:');
+    disp(P);
     disp(['Num Iter: ', num2str(iter),' iterations']);
     disp('');
 end
