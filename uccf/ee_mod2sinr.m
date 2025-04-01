@@ -121,7 +121,7 @@ for bagiter=1:bagrows
             subject to
                 %P_new >= 0.1;
                 1<= sum(P_new, 2) <= P_max;
-                %W * sgn_new >= 1e6;
+                W * sgn_new >= 1e6;
         cvx_end
         % Update Power Allocation
         P = P_new;
