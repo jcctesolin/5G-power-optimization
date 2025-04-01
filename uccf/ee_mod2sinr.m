@@ -105,22 +105,20 @@ for bagiter=1:bagrows
             variable P_new(L, K) nonnegative;
             variable sgn_new(K);
             variable intf_new(K);
-            variable new_sinr(K);
             expression a;
             expression b;
-            variable sinr_new(K) nonnegative;
-            sgn_new(k) ==  sum(bag{bagiter,K}*(H(:, K).^2.* P_new(:, K))) ;
-            intf_new(k) == sigma2 + sum(H(:, K).^2.* P_new(:, K)) - sum(bag{bagiter,K}*(H(:, K).^2.* P_new(:, K))) ;
+            sgn_new ==  sum(bag{bagiter,K}*(H(:, K).^2.* P_new(:, K))) ;
+            intf_new == sigma2 + sum(H(:, K).^2.* P_new(:, K)) - sum(bag{bagiter,K}*(H(:, K).^2.* P_new(:, K))) ;
             %
             %new_sinr == sgn_new;
             a = log(sgn_new + intf_new)/log(2);    
             %a = sgn_new .* inv_pos(intf_new);
             b = log(intf_new)/log(2);
-            maximize W*sum(sgn_new(:)) - lambda *  (sum(P_new(:)) + sum(P_circuit) + sum(P_backhaul))
+            maximize W * sum(sgn_new(:)) - lambda *  (sum(P_new(:)) + sum(P_circuit) + sum(P_backhaul))
             %maximize W*sum(a-b) - lambda *  (sum(P_new(:)) + sum(P_circuit) + sum(P_backhaul))
             subject to
-                %P_new >= 0.1;
-                1<= sum(P_new, 2) <= P_max;
+                P_new >= 0.1;
+                sum(P_new, 2) <= P_max;
                 W * sgn_new >= 1e6;
         cvx_end
         % Update Power Allocation
@@ -131,7 +129,7 @@ for bagiter=1:bagrows
     disp(['Bag: ', num2str(bagiter), '']);
     disp('Cluster:');
     disp(bag(bagiter, :));
-    disp(['Optimized EE: ', num2str(EE,'%.2e'), ' bits/Joule']);
+    disp(['Optimized EE: ', num2str(EE/1e6,'%.2e'), ' Mbits/Joule']);
     disp(['Total Power Consumption: ', num2str(P_total), ' W']);
     disp(['Total Sum-Rate: ', num2str(R_sum / 1e6), ' Mbps']);
     disp('Power Matrix:');
