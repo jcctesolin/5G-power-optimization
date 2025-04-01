@@ -79,7 +79,7 @@ for bagiter=1:bagrows
             %interference = sum(sum(P .* H.^2)) - signal;
             interference = sum(H(:, k).^2.* P(:, k)) - signal ;
             SINR(k) = signal / (sigma2 + interference);
-            %R(k) = W * log2(1 + SINR(k)) ;
+            R(k) = W * log2(1 + SINR(k)) ;
         end
     
         % Compute sum-rate
@@ -100,22 +100,28 @@ for bagiter=1:bagrows
         % Update lambda
         lambda = EE;
         
-        %dummy= sum(bag{bagiter,k}*(H(:, k).^2.* P(:, k)))/(sigma2+(sum(H(:, k).^2.* P(:, k)) - sum(bag{bagiter,k}*(H(:, k).^2.* P(:, k)))));
-        %dummy_num=sum(bag{bagiter,k}*(H(:, k).^2.* P(:, k)));
-        %dummy_den=(sigma2+(sum(H(:, k).^2.* P(:, k)) - sum(bag{bagiter,k}*(H(:, k).^2.* P(:, k)))))
-              
         % Solve Convex Power Allocation Subproblem (EDM Step)
         cvx_begin quiet
             variable P_new(L, K) nonnegative;
-            maximize sum(W *  log(1 + sum(P_new .* H.^2, 1))/log(2)) - lambda * (sum(P_new(:)) + sum(P_circuit) + sum(P_backhaul));
-            %maximize  W*sum(1+log(sum(bag{bagiter,k}*(H(:, k).^2.* P_new(:, k)))))/log(2) + W*sum(log(sigma2 + sum(H(:, K).^2.* P_new(:, K)) - sum(bag{bagiter,K}*(H(:, K).^2.* P_new(:, K))))/log(2))  - lambda * (sum(P_new(:)) + sum(P_circuit) + sum(P_backhaul));
+            variable sgn_new(K);
+            variable intf_new(K);
+            variable new_sinr(K);
+            expression a;
+            expression b;
+            variable sinr_new(K) nonnegative;
+            sgn_new(k) ==  sum(bag{bagiter,K}*(H(:, K).^2.* P_new(:, K))) ;
+            intf_new(k) == sigma2 + sum(H(:, K).^2.* P_new(:, K)) - sum(bag{bagiter,K}*(H(:, K).^2.* P_new(:, K))) ;
+            %
+            %new_sinr == sgn_new;
+            a = log(sgn_new + intf_new)/log(2);    
+            %a = sgn_new .* inv_pos(intf_new);
+            b = log(intf_new)/log(2);
+            maximize W*sum(sgn_new(:)) - lambda *  (sum(P_new(:)) + sum(P_circuit) + sum(P_backhaul))
+            %maximize W*sum(a-b) - lambda *  (sum(P_new(:)) + sum(P_circuit) + sum(P_backhaul))
             subject to
-                %0.1*P_max <= P_new <= P_max;
-                %1.1  <= sum(P_new, 2) <= P_max;  % Power constraint at each AP
-                P_new(L, K) >= 1;
-                sum(P_new, 2) <= P_max;
-                %W * log(1 + P_new .* H.^2) >= 1000;
-                %W * log(1 + SINR_new(K))/log(2) >= 1000;
+                %P_new >= 0.1;
+                1<= sum(P_new, 2) <= P_max;
+                %W * sgn_new >= 1e6;
         cvx_end
         % Update Power Allocation
         P = P_new;
@@ -130,6 +136,8 @@ for bagiter=1:bagrows
     disp(['Total Sum-Rate: ', num2str(R_sum / 1e6), ' Mbps']);
     disp('Power Matrix:');
     disp(P);
+    disp('Rate Matrix in Mbps:');
+    disp(R/1e6);
     disp(['Num Iter: ', num2str(iter),' iterations']);
     disp('');
 end
