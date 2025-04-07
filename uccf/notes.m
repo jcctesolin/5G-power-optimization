@@ -1,19 +1,12 @@
+% Dados de exemplo
+nomes = ["Ana"; "Bruno"; "Carlos"];
+idades = [25; 32; 28];
+notas = [8.5; 7.3; 9.0];
 
-B = [1 2;
-     3 4;
-     5 6;
-     7 8];
+% Criando a tabela
+T = table(nomes, idades, notas);
 
-C = [1 2;
-     0 4;
-     5 0;
-     0 0];
+% Exibindo a tabela
 
-A = C * pinv(B);
+disp(T);
 
-disp(A);
-
-
-A_line = A;
-
-disp(A_line*B);

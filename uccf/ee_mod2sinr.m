@@ -11,6 +11,11 @@ max_iter = 100; % Max iterations for Dinkelbach's algorithm
 nsrv = 4;
 ngh_size = 6;
 
+% result table
+bagv=[];
+
+
+
 %% Generate random channel gains (Rayleigh fading)
 %H = abs(sqrt(0.5) * (randn(L, K) + 1i * randn(L, K))); 
 H = [0.5 0.8 1.0 0.6; 
@@ -127,8 +132,10 @@ for bagiter=1:bagrows
     
     %% Display Results
     disp(['Bag: ', num2str(bagiter), '']);
+    bagv(end+1)= bagiter;
     disp('Cluster:');
     disp(bag(bagiter, :));
+    %T.cluster = num2str(bag(bagiter, :));
     disp(['Optimized EE: ', num2str(EE/1e6,'%.2e'), ' Mbits/Joule']);
     disp(['Total Power Consumption: ', num2str(P_total), ' W']);
     disp(['Total Sum-Rate: ', num2str(R_sum / 1e6), ' Mbps']);
@@ -139,3 +146,5 @@ for bagiter=1:bagrows
     disp(['Num Iter: ', num2str(iter),' iterations']);
     disp('');
 end
+T=table(bagv);
+disp(T)
