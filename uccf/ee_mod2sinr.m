@@ -21,7 +21,7 @@ bagv=[];
 H = [0.5 0.8 1.0 0.6; 
     1.0 0.5 0.4 0.6]';
 
-[sorted_vals, sorted_indices] = sort(H);
+[sorted_vals, sorted_indices] = sort(H,"descend");
 %[row, col] = ind2sub(size(H), sorted_indices);
 
 %% Creating clusters
@@ -39,6 +39,7 @@ for k=1:K
         else
             cluster = cluster_base;
             cluster(1,sorted_indices(j,k))=1;
+            cluster_base = cluster;
         end
         clusterset{k}{end+1}=cluster;
     end    
@@ -124,7 +125,7 @@ for bagiter=1:bagrows
             subject to
                 P_new >= 0.1;
                 sum(P_new, 2) <= P_max;
-                W * sgn_new >= 1e6;
+                W * sgn_new >= 1 e6;
         cvx_end
         % Update Power Allocation
         P = P_new;

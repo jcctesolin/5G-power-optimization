@@ -32,8 +32,8 @@ while iter < max_iter
     iter = iter + 1;
 
     % Função objetivo para dado lambda: maximize sum_rate - lambda * total_power
-    fun = @(p_vec) - (sum_rate(reshape(p_vec, K, L), h, noise_power) - ...
-                      lambda * (total_power(reshape(p_vec, K, L)) + Pc));
+    fun = @(p_vec) - (sum_rate_mrt(reshape(p_vec, K, L), h, noise_power) - ...
+                      lambda * (total_power_mrt(reshape(p_vec, K, L)) + Pc));
 
     % Restrições
     lb = Pmin * ones(K*L, 1);
@@ -41,12 +41,13 @@ while iter < max_iter
 
     nonlcon = @(p_vec) rate_constraints(reshape(p_vec, K, L), h, noise_power, Rmin);
 
-    options = optimoptions('fmincon','Display','iter','Algorithm','sqp');
+    %options = optimoptions('fmincon','Display','iter','Algorithm','sqp');
+    options = optimoptions('fmincon','Display','final','Algorithm','sqp');
     [p_opt_vec, ~] = fmincon(fun, p(:), [], [], [], [], lb, ub, nonlcon, options);
 
     p_opt = reshape(p_opt_vec, K, L);
-    num = sum_rate(p_opt, h, noise_power);
-    denom = total_power(p_opt) + Pc;
+    num = sum_rate_mrt(p_opt, h, noise_power);
+    denom = total_power_mrt(p_opt) + Pc;
     new_lambda = num / denom;
 
     if abs(new_lambda - lambda) < tolerance

@@ -1,21 +1,15 @@
-function R = sum_rate(p, h, noise_power)
-[K, L, M] = size(h);
-R = 0;
-for k = 1:K
-    signal = 0;
-    interf = 0;
-    for l = 1:L
-        hk = squeeze(h(k, l, :));
-        signal = signal + sqrt(p(k,l)) * norm(hk);
-    end
-    for j = 1:K
-        if j ~= k
-            for l = 1:L
-                hj = squeeze(h(j, l, :));
-                interf = interf + p(j,l) * norm(hj)^2;
-            end
+function R = sum_rate(p, h, sigma2, K, L)
+    R = 0;
+    for k = 1:K
+        signal = 0;
+        interference = 0;
+        for l = 1:L
+            signal = signal + sqrt(p(l)) * h(k,l);
         end
+        for j = 1:L
+            interference = interference + (j ~= l) * p(j) * h(k,j);
+        end
+        SINR_k = abs(signal)^2 / (interference + sigma2);
+        R = R + log2(1 + SINR_k);
     end
-    SINR_k = (signal^2) / (interf + noise_power);
-    R = R + log(1 + SINR_k);
 end
